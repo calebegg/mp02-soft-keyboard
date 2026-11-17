@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Sculpted keycap silhouette + Minimal 5-dot mark -->
+    <path
+        android:fillColor="#262629"
+        android:strokeColor="#3C3C40"
+        android:strokeWidth="1.5"
+        android:pathData="M34,28 L74,28 Q80,28 80,34 L80,74 Q80,80 74,80 L34,80 Q28,80 28,74 L28,34 Q28,28 34,28 Z" />
+    <path
+        android:fillColor="#EAE9E3"
+        android:pathData="M43,46 m-3.6,0 a3.6,3.6 0 1,0 7.2,0 a3.6,3.6 0 1,0 -7.2,0" />
+    <path
+        android:fillColor="#EAE9E3"
+        android:pathData="M43,62 m-3.6,0 a3.6,3.6 0 1,0 7.2,0 a3.6,3.6 0 1,0 -7.2,0" />
+    <path
+        android:fillColor="#FF2E00"
+        android:pathData="M54,54 m-2.8,0 a2.8,2.8 0 1,0 5.6,0 a2.8,2.8 0 1,0 -5.6,0" />
+    <path
+        android:fillColor="#EAE9E3"
+        android:pathData="M65,46 m-3.6,0 a3.6,3.6 0 1,0 7.2,0 a3.6,3.6 0 1,0 -7.2,0" />
+    <path
+        android:fillColor="#EAE9E3"
+        android:pathData="M65,62 m-3.6,0 a3.6,3.6 0 1,0 7.2,0 a3.6,3.6 0 1,0 -7.2,0" />
+</vector>

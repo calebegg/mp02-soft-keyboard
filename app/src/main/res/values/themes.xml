@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Mp02Keyboard" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:statusBarColor">@color/mp02_onyx_bg</item>
+        <item name="android:navigationBarColor">@color/mp02_onyx_bg</item>
+    </style>
+</resources>
