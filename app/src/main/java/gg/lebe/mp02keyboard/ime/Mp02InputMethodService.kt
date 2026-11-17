@@ -1,6 +1,5 @@
 package gg.lebe.mp02keyboard.ime
 
-import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
@@ -11,7 +10,6 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.core.view.WindowCompat
-import gg.lebe.mp02keyboard.ui.MainActivity
 
 class Mp02InputMethodService : InputMethodService(), Mp02KeyboardView.Listener {
 
@@ -61,6 +59,11 @@ class Mp02InputMethodService : InputMethodService(), Mp02KeyboardView.Listener {
         if (!isNumeric) {
             updateAutoShiftState(info)
         }
+    }
+
+    override fun onFinishInputView(finishingInput: Boolean) {
+        keyboardView?.clearPointers()
+        super.onFinishInputView(finishingInput)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -188,40 +191,9 @@ class Mp02InputMethodService : InputMethodService(), Mp02KeyboardView.Listener {
         sendCtrlKeyEvent(keyCode)
     }
 
-    override fun onCommandAction(action: Mp02CommandAction) {
-        val ic = currentInputConnection
-        when (action) {
-            Mp02CommandAction.SELECT_ALL -> ic?.performContextMenuAction(android.R.id.selectAll)
-            Mp02CommandAction.CUT -> ic?.performContextMenuAction(android.R.id.cut)
-            Mp02CommandAction.COPY -> ic?.performContextMenuAction(android.R.id.copy)
-            Mp02CommandAction.PASTE -> ic?.performContextMenuAction(android.R.id.paste)
-            Mp02CommandAction.UNDO -> {
-                if (ic?.performContextMenuAction(android.R.id.undo) != true) {
-                    sendCtrlKeyEvent(KeyEvent.KEYCODE_Z)
-                }
-            }
-            Mp02CommandAction.HOME -> sendDownUpKeyEvents(KeyEvent.KEYCODE_MOVE_HOME)
-            Mp02CommandAction.END -> sendDownUpKeyEvents(KeyEvent.KEYCODE_MOVE_END)
-            Mp02CommandAction.LEFT -> sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_LEFT)
-            Mp02CommandAction.DOWN -> sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_DOWN)
-            Mp02CommandAction.UP -> sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_UP)
-            Mp02CommandAction.RIGHT -> sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_RIGHT)
-            Mp02CommandAction.TOGGLE_FINISH -> syncNavigationBarColor()
-            Mp02CommandAction.SWITCH_IME -> onShowImePicker()
-            Mp02CommandAction.OPEN_SETTINGS -> onOpenSettings()
-            Mp02CommandAction.BACK_TO_KEYS -> Unit
-        }
-    }
-
     override fun onShowImePicker() {
         val imm = getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager ?: return
         imm.showInputMethodPicker()
-    }
-
-    private fun onOpenSettings() {
-        val intent = Intent(this, MainActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
     }
 
     private fun updateAutoShiftState(info: EditorInfo?) {

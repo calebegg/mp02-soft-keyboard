@@ -117,22 +117,27 @@ class Mp02KeycapRenderer(
     }
 
     private fun getGlowShader(key: Mp02KeyBounds, theme: Mp02Palette): RadialGradient {
-        if (cachedGlowTheme !== theme || cachedGlowWidth != key.widthPx) {
-            cachedGlowTheme = theme
-            cachedGlowWidth = key.widthPx
-            cachedGlowShader = RadialGradient(
-                0f, 0f, key.widthPx * 0.55f,
-                theme.backlightGlow, 0x00FFFFFF,
-                Shader.TileMode.CLAMP
-            )
+        val cached = cachedGlowShader
+        if (cached != null && cachedGlowTheme === theme && cachedGlowWidth == key.widthPx) {
+            return cached
         }
-        return cachedGlowShader!!
+        val shader = RadialGradient(
+            0f, 0f, (key.widthPx * 0.55f).coerceAtLeast(1f),
+            theme.backlightGlow, 0x00FFFFFF,
+            Shader.TileMode.CLAMP
+        )
+        cachedGlowTheme = theme
+        cachedGlowWidth = key.widthPx
+        cachedGlowShader = shader
+        return shader
     }
 
     fun invalidateCaches() {
         rowGradNormal.clear()
         rowGradPressed.clear()
         cachedTheme = null
+        cachedGlowTheme = null
+        cachedGlowWidth = -1f
         cachedGlowShader = null
         cachedIconWidth = -1f
     }

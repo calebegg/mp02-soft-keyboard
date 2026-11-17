@@ -25,7 +25,6 @@ class Mp02TouchAndOverlayTest {
         override fun onSearchKey() {}
         override fun onCursorMove(delta: Int, select: Boolean) { cursorMoves += delta }
         override fun onCtrlChord(keyId: Mp02KeyId) { ctrlChords += keyId }
-        override fun onCommandAction(action: Mp02CommandAction) {}
         override fun onShowImePicker() { imePickers++ }
         override fun onKeyHaptic() {}
         override fun onTickHaptic() {}
@@ -152,15 +151,25 @@ class Mp02TouchAndOverlayTest {
     }
 
     @Test
-    fun `command and emoji overlay cells stay inside deck bounds`() {
+    fun `minimal key is unassigned and leaves keys deck active`() {
         val m = testMetrics()
-        val cmdCells = Mp02OverlayBuilder.buildCommandCells(m, "PEARL")
-        assertEquals(15, cmdCells.size)
-        for (c in cmdCells) {
-            assertTrue(c.rect.left >= 0f && c.rect.right <= m.widthPx)
-            assertTrue(c.rect.top >= m.topBezelPx - 1f && c.rect.bottom <= m.heightPx)
-        }
+        val sink = FakeSink()
+        val ctrl = Mp02TouchController(sink, FakeScheduler())
+        val cfg = Mp02InputConfig()
+        val (mx, my) = centerOf(m, Mp02KeyId.MINIMAL)
 
+        ctrl.onPointerDown(m, 0, mx, my, 100L, cfg)
+        ctrl.onPointerUp(0, 140L, cfg)
+
+        assertEquals(Mp02DeckMode.KEYS, ctrl.deckMode)
+        assertEquals("", sink.committed.toString())
+        assertEquals(0, sink.cursorMoves)
+        assertEquals(0, sink.imePickers)
+    }
+
+    @Test
+    fun `emoji overlay cells stay inside deck bounds`() {
+        val m = testMetrics()
         val emojiCells = Mp02OverlayBuilder.buildEmojiCells(m, 1, emptyList())
         assertEquals(30, emojiCells.size) // 6 tabs + 24 emojis
         for (c in emojiCells) {

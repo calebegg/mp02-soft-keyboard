@@ -6,26 +6,7 @@ import android.graphics.Typeface
 
 enum class Mp02DeckMode {
     KEYS,
-    COMMAND,
     EMOJI
-}
-
-enum class Mp02CommandAction(val label: String) {
-    SELECT_ALL("ALL"),
-    CUT("CUT"),
-    COPY("COPY"),
-    PASTE("PASTE"),
-    UNDO("UNDO"),
-    HOME("HOME"),
-    LEFT("←"),
-    DOWN("↓"),
-    UP("↑"),
-    RIGHT("→"),
-    END("END"),
-    BACK_TO_KEYS("KEYS"),
-    TOGGLE_FINISH("FINISH"),
-    SWITCH_IME("IME"),
-    OPEN_SETTINGS("SETUP")
 }
 
 data class OverlayCell(
@@ -33,7 +14,7 @@ data class OverlayCell(
     val path: android.graphics.Path,
     val label: String,
     val isAccent: Boolean = false,
-    val commandAction: Mp02CommandAction? = null,
+    val backToKeys: Boolean = false,
     val emojiValue: String? = null,
     val emojiCategoryIndex: Int? = null
 )
@@ -62,46 +43,6 @@ object Mp02OverlayBuilder {
             "🎲", "🎭", "📚", "🎧", "🚲", "🚇", "🏠", "🛠️"
         )
     )
-
-    fun buildCommandCells(metrics: Mp02DeckMetrics, finishLabel: String): List<OverlayCell> {
-        val row0 = listOf(
-            Mp02CommandAction.SELECT_ALL to "ALL",
-            Mp02CommandAction.CUT to "CUT",
-            Mp02CommandAction.COPY to "COPY",
-            Mp02CommandAction.PASTE to "PASTE",
-            Mp02CommandAction.UNDO to "UNDO"
-        )
-        val row1 = listOf(
-            Mp02CommandAction.HOME to "HOME",
-            Mp02CommandAction.LEFT to "←",
-            Mp02CommandAction.DOWN to "↓",
-            Mp02CommandAction.UP to "↑",
-            Mp02CommandAction.RIGHT to "→",
-            Mp02CommandAction.END to "END"
-        )
-        val row2 = listOf(
-            Mp02CommandAction.BACK_TO_KEYS to "⁘ KEYS",
-            Mp02CommandAction.TOGGLE_FINISH to finishLabel,
-            Mp02CommandAction.SWITCH_IME to "SWITCH",
-            Mp02CommandAction.OPEN_SETTINGS to "SETTINGS"
-        )
-        val rows = listOf(row0, row1, row2)
-        return layoutGrid(metrics, rows.size) { r, top, h, usableLeft, usableW, gapX ->
-            val items = rows[r]
-            val cellW = (usableW - gapX * (items.size - 1)) / items.size
-            items.mapIndexed { idx, (action, label) ->
-                val x = usableLeft + idx * (cellW + gapX)
-                val rect = Mp02Rect(x, top, x + cellW, top + h)
-                OverlayCell(
-                    rect = rect,
-                    path = Mp02Geometry.buildSquirclePath(rect),
-                    label = label,
-                    isAccent = action == Mp02CommandAction.BACK_TO_KEYS,
-                    commandAction = action
-                )
-            }
-        }
-    }
 
     fun buildEmojiCells(
         metrics: Mp02DeckMetrics,
@@ -135,7 +76,7 @@ object Mp02OverlayBuilder {
                 path = Mp02Geometry.buildSquirclePath(rect),
                 label = title,
                 isAccent = (catIdx == safeCat) || (catIdx == null),
-                commandAction = if (catIdx == null) Mp02CommandAction.BACK_TO_KEYS else null,
+                backToKeys = (catIdx == null),
                 emojiCategoryIndex = catIdx
             )
         }
@@ -157,26 +98,6 @@ object Mp02OverlayBuilder {
                     emojiValue = emojis[eIdx]
                 )
             }
-        }
-        return out
-    }
-
-    private inline fun layoutGrid(
-        metrics: Mp02DeckMetrics,
-        rowCount: Int,
-        buildRow: (rowIndex: Int, top: Float, h: Float, usableLeft: Float, usableW: Float, gapX: Float) -> List<OverlayCell>
-    ): List<OverlayCell> {
-        val marginX = metrics.keys.first().rect.left
-        val usableW = metrics.widthPx - 2f * marginX
-        val gapX = metrics.gapXPx
-        val gapY = metrics.gapYPx
-        val topStart = metrics.topBezelPx
-        val availH = metrics.heightPx - topStart - metrics.bottomChinPx
-        val rowH = (availH - gapY * (rowCount - 1)) / rowCount
-        val out = ArrayList<OverlayCell>(20)
-        for (r in 0 until rowCount) {
-            val top = topStart + r * (rowH + gapY)
-            out += buildRow(r, top, rowH, marginX, usableW, gapX)
         }
         return out
     }

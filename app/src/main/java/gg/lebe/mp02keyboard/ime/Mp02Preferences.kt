@@ -14,10 +14,18 @@ class Mp02Preferences(context: Context) {
         deviceCtx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
+    var emberUnlocked: Boolean
+        get() = prefs.getBoolean(KEY_EMBER_UNLOCKED, false)
+        set(value) = prefs.edit().putBoolean(KEY_EMBER_UNLOCKED, value).apply()
+
     var finish: Mp02Finish
-        get() = runCatching {
-            Mp02Finish.valueOf(prefs.getString(KEY_FINISH, Mp02Finish.ONYX.name)!!)
-        }.getOrDefault(Mp02Finish.ONYX)
+        get() {
+            val raw = runCatching {
+                val saved = prefs.getString(KEY_FINISH, Mp02Finish.ONYX.name) ?: Mp02Finish.ONYX.name
+                Mp02Finish.valueOf(saved)
+            }.getOrDefault(Mp02Finish.ONYX)
+            return if (raw == Mp02Finish.EMBER && !emberUnlocked) Mp02Finish.ONYX else raw
+        }
         set(value) = prefs.edit().putString(KEY_FINISH, value.name).apply()
 
     var heightScale: Float
@@ -76,6 +84,7 @@ class Mp02Preferences(context: Context) {
 
     companion object {
         private const val PREFS_NAME = "mp02_keyboard_prefs"
+        private const val KEY_EMBER_UNLOCKED = "ember_unlocked"
         private const val KEY_FINISH = "finish"
         private const val KEY_HEIGHT_SCALE = "height_scale"
         private const val KEY_BOTTOM_CHIN_MM = "bottom_chin_mm"

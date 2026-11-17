@@ -5,11 +5,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +38,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,7 +47,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -81,10 +87,12 @@ private fun readImeStatus(context: Context): ImeStatus {
 @Composable
 private fun Mp02SettingsScreen() {
     val context = LocalContext.current
+    val hapticFeedback = LocalHapticFeedback.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefs = remember { Mp02Preferences(context) }
 
     var imeStatus by remember { mutableStateOf(readImeStatus(context)) }
+    var emberUnlocked by remember { mutableStateOf(prefs.emberUnlocked) }
     var finish by remember { mutableStateOf(prefs.finish) }
     var heightScale by remember { mutableFloatStateOf(prefs.heightScale) }
     var bottomChinMm by remember { mutableFloatStateOf(prefs.bottomChinMm) }
@@ -95,11 +103,14 @@ private fun Mp02SettingsScreen() {
     var trackpadSpace by remember { mutableStateOf(prefs.spacebarTrackpad) }
     var longPressAlt by remember { mutableStateOf(prefs.longPressForAlt) }
     var sandboxText by remember { mutableStateOf("") }
+    var secretTapCount by remember { mutableIntStateOf(0) }
+    var lastSecretTapMs by remember { mutableLongStateOf(0L) }
 
     DisposableEffect(lifecycleOwner) {
         val obs = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 imeStatus = readImeStatus(context)
+                emberUnlocked = prefs.emberUnlocked
                 finish = prefs.finish
             }
         }
@@ -129,7 +140,28 @@ private fun Mp02SettingsScreen() {
             text = "MP02 Keyboard",
             color = ink,
             fontSize = 22.sp,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                val now = System.currentTimeMillis()
+                val nextCount = if (now - lastSecretTapMs <= 1500L) secretTapCount + 1 else 1
+                lastSecretTapMs = now
+                if (nextCount >= 5) {
+                    secretTapCount = 0
+                    if (!emberUnlocked) {
+                        prefs.emberUnlocked = true
+                        emberUnlocked = true
+                    }
+                    finish = Mp02Finish.EMBER
+                    prefs.finish = Mp02Finish.EMBER
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    Toast.makeText(context, "Ember finish unlocked", Toast.LENGTH_SHORT).show()
+                } else {
+                    secretTapCount = nextCount
+                }
+            }
         )
 
         if (!imeStatus.enabled || !imeStatus.active) {
@@ -196,7 +228,15 @@ private fun Mp02SettingsScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Mp02Finish.entries.forEach { option ->
+                val visibleFinishes = remember(emberUnlocked) {
+                    listOfNotNull(
+                        Mp02Finish.ONYX,
+                        Mp02Finish.PEARL,
+                        Mp02Finish.EMBER.takeIf { emberUnlocked },
+                        Mp02Finish.AUTO
+                    )
+                }
+                visibleFinishes.forEach { option ->
                     val selected = finish == option
                     Box(
                         contentAlignment = Alignment.Center,

@@ -28,7 +28,6 @@ interface Mp02InputSink {
     fun onSearchKey()
     fun onCursorMove(delta: Int, select: Boolean)
     fun onCtrlChord(keyId: Mp02KeyId)
-    fun onCommandAction(action: Mp02CommandAction)
     fun onShowImePicker()
     fun onKeyHaptic()
     fun onTickHaptic()
@@ -227,19 +226,11 @@ class Mp02TouchController(
         sink.onRedrawRequested()
     }
 
-    fun activateOverlayCell(cell: OverlayCell, onRecordEmoji: (String) -> Unit, onCycleFinish: () -> Unit) {
+    fun activateOverlayCell(cell: OverlayCell, onRecordEmoji: (String) -> Unit) {
         when {
-            cell.commandAction == Mp02CommandAction.BACK_TO_KEYS -> {
+            cell.backToKeys -> {
                 deckMode = Mp02DeckMode.KEYS
                 sink.onOverlayChanged()
-            }
-            cell.commandAction == Mp02CommandAction.TOGGLE_FINISH -> {
-                onCycleFinish()
-                sink.onOverlayChanged()
-                sink.onCommandAction(Mp02CommandAction.TOGGLE_FINISH)
-            }
-            cell.commandAction != null -> {
-                sink.onCommandAction(cell.commandAction)
             }
             cell.emojiCategoryIndex != null -> {
                 emojiCategoryIndex = cell.emojiCategoryIndex
@@ -308,10 +299,7 @@ class Mp02TouchController(
                     altState = LayerLockState.OFF
                 }
             }
-            Mp02KeyId.MINIMAL -> {
-                deckMode = Mp02DeckMode.COMMAND
-                sink.onOverlayChanged()
-            }
+            Mp02KeyId.MINIMAL -> Unit
             Mp02KeyId.SEARCH -> sink.onSearchKey()
             Mp02KeyId.ENTER -> {
                 val shift = isKeyPressed(Mp02KeyId.SHIFT) || shiftState != ShiftState.OFF
@@ -321,7 +309,7 @@ class Mp02TouchController(
             }
             Mp02KeyId.SPACE -> {
                 if (config.doubleSpacePeriod && lastSpaceTapMs > 0L && nowMs - lastSpaceTapMs < 320L &&
-                    lastCommittedChar != null && lastCommittedChar!!.isLetterOrDigit()
+                    lastCommittedChar?.isLetterOrDigit() == true
                 ) {
                     sink.onBackspaceChar()
                     sink.onCommitText(". ")

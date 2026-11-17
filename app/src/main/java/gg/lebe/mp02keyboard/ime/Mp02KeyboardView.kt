@@ -33,7 +33,6 @@ class Mp02KeyboardView @JvmOverloads constructor(
         fun onSearchKey()
         fun onCursorMove(delta: Int, select: Boolean)
         fun onCtrlChord(keyId: Mp02KeyId)
-        fun onCommandAction(action: Mp02CommandAction)
         fun onShowImePicker()
     }
 
@@ -85,7 +84,6 @@ class Mp02KeyboardView @JvmOverloads constructor(
             override fun onSearchKey() { listener?.onSearchKey() }
             override fun onCursorMove(delta: Int, select: Boolean) { listener?.onCursorMove(delta, select) }
             override fun onCtrlChord(keyId: Mp02KeyId) { listener?.onCtrlChord(keyId) }
-            override fun onCommandAction(action: Mp02CommandAction) { listener?.onCommandAction(action) }
             override fun onShowImePicker() { listener?.onShowImePicker() }
             override fun onKeyHaptic() { performKeyHaptic() }
             override fun onTickHaptic() { performTickHaptic() }
@@ -121,6 +119,7 @@ class Mp02KeyboardView @JvmOverloads constructor(
     fun setAutoShift(shouldCap: Boolean) = controller.setAutoShift(shouldCap)
     fun setInputNumericHint(isNumeric: Boolean) = controller.setInputNumericHint(isNumeric)
     fun resetModifiersForNewField() = controller.resetModifiersForNewField()
+    fun clearPointers() = controller.clearPointers()
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val dm = resources.displayMetrics
@@ -143,17 +142,10 @@ class Mp02KeyboardView @JvmOverloads constructor(
         setMeasuredDimension(computed.widthPx, computed.heightPx)
     }
 
-    private fun nextFinishOption(): Mp02Finish = when (prefs.finish) {
-        Mp02Finish.ONYX -> Mp02Finish.PEARL
-        Mp02Finish.PEARL -> Mp02Finish.EMBER
-        Mp02Finish.EMBER, Mp02Finish.AUTO -> Mp02Finish.ONYX
-    }
-
     private fun rebuildOverlayIfNeeded() {
         val m = metrics ?: return
         overlayCells = when (controller.deckMode) {
             Mp02DeckMode.KEYS -> emptyList()
-            Mp02DeckMode.COMMAND -> Mp02OverlayBuilder.buildCommandCells(m, nextFinishOption().name)
             Mp02DeckMode.EMOJI -> Mp02OverlayBuilder.buildEmojiCells(m, controller.emojiCategoryIndex, prefs.recentEmojis)
         }
     }
@@ -241,12 +233,7 @@ class Mp02KeyboardView @JvmOverloads constructor(
                 if (idx in overlayCells.indices) {
                     controller.activateOverlayCell(
                         cell = overlayCells[idx],
-                        onRecordEmoji = { prefs.recordRecentEmoji(it) },
-                        onCycleFinish = {
-                            prefs.finish = nextFinishOption()
-                            theme = resolveCurrentTheme()
-                            keycapRenderer.invalidateCaches()
-                        }
+                        onRecordEmoji = { prefs.recordRecentEmoji(it) }
                     )
                 } else {
                     invalidate()
