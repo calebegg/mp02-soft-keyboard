@@ -4,4 +4,7 @@ app/build/
 *.iml
 .idea/
 local.properties
+signing.properties
+*.jks
+*.keystore
 .DS_Store

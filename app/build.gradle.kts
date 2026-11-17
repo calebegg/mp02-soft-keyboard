@@ -1,8 +1,23 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+val releaseSigningProps = Properties().apply {
+    val homeProps = File(System.getProperty("user.home"), ".android/mp02-release.properties")
+    val localSigning = rootProject.file("signing.properties")
+    val chosen = listOf(localSigning, homeProps).firstOrNull { it.isFile }
+    if (chosen != null) {
+        chosen.inputStream().use { load(it) }
+    }
+}
+
+fun signingProp(propKey: String, envKey: String): String? =
+    System.getenv(envKey)?.takeIf { it.isNotBlank() }
+        ?: releaseSigningProps.getProperty(propKey)?.takeIf { it.isNotBlank() }
 
 android {
     namespace = "gg.lebe.mp02keyboard"
@@ -16,10 +31,30 @@ android {
         versionName = "1.0.0"
     }
 
+    val releaseStoreFile = signingProp("storeFile", "MP02_KEYSTORE_PATH")?.let(::File)?.takeIf { it.isFile }
+    val storePass = signingProp("storePassword", "MP02_KEYSTORE_PASS")
+    val alias = signingProp("keyAlias", "MP02_KEY_ALIAS")
+    val kPass = signingProp("keyPassword", "MP02_KEY_PASS")
+    val hasReleaseSigning = releaseStoreFile != null && storePass != null && alias != null && kPass != null
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = releaseStoreFile
+                storePassword = storePass
+                keyAlias = alias
+                keyPassword = kPass
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
