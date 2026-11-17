@@ -2,6 +2,8 @@
 
 An Android `InputMethodService` replicating the physical keyboard layout, dimensions, and **Onyx** / **Pearl** finishes of the **Minimal Phone 2 (MP02)**.
 
+![MP02 Keyboard Pearl and Onyx finishes on Pixel 10](docs/preview.png)
+
 ## Layout & Hardware Proportions
 
 Calibrated directly from Minimal Phone 2 schematics (`72.0 × 122.6 mm` body):
